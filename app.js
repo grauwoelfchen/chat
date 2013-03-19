@@ -11,7 +11,7 @@ var express = require('express')
 
 var app = express();
 
-app.configure(function(){
+app.configure(function() {
   app.set('port', process.env.PORT || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -23,7 +23,7 @@ app.configure(function(){
   app.use(express.static(path.join(__dirname, 'public')));
 });
 
-app.configure('development', function(){
+app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
@@ -33,6 +33,36 @@ app.get('/foo/:id', routes.sample1);
 app.get('/mongo', routes.showMongo);
 app.post('/mongo', routes.saveMongo);
 
-http.createServer(app).listen(app.get('port'), function(){
+// socket.io
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+server.listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));
+});
+var chats = [];
+var sockets = {};
+
+function broadcast(method, message) {
+  for(var n in sockets) {
+    sockets[n].emit(method, message);
+  }
+};
+
+io
+.of('/chat')
+.on('connection', function(socket) {
+  sockets[socket.id] = socket;
+  socket.emit('chat.list', chats);
+  socket.on('chat.add', function(data) {
+    data.time = Date.now();
+    chats.push(data);
+    broadcast('chat.add', data);
+  });
+  socket.on('disconnect', function() {
+    delete sockets[socket.id];
+  });
+});
+
+app.get('/socket', function(req, res) {
+  res.render('socket', {title:'Chat'});
 });
