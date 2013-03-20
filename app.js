@@ -27,11 +27,38 @@ app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
-app.get('/', routes.index);
-app.get('/users', user.list);
-app.get('/foo/:id', routes.sample1);
-app.get('/mongo', routes.showMongo);
-app.post('/mongo', routes.saveMongo);
+app.get('/', function(req, res) {
+  res.render('index', {title:'Chat'});
+});
+
+// db
+var mongo = require('mongodb');
+var client = new mongo.Db(
+    'chat',
+    new mongo.Server(
+      process.env.MONGO_HOST || 'localhost',
+      process.env.MONGO_PORT || 27017
+    ),
+    {safe:true}
+  );
+client.open(function(err, client) {
+  if (process.env.NODE_ENV == 'production') {
+    client.authenticate(
+      process.env.MONGO_USER,
+      process.env.MONGO_PASS,
+      function(err, res) {
+        if (err) {
+          throw err;
+        }
+      }
+    );
+  }
+  if (err) {
+    console.log(err);
+  } else {
+    console.log('connected to mongodb');
+  }
+});
 
 // socket.io
 var server = http.createServer(app);
@@ -39,30 +66,49 @@ var io = require('socket.io').listen(server);
 server.listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));
 });
-var chats = [];
-var sockets = {};
 
+var sockets = {};
 function broadcast(method, message) {
   for(var n in sockets) {
     sockets[n].emit(method, message);
   }
 };
 
+var messages = [];
 io
 .of('/chat')
 .on('connection', function(socket) {
   sockets[socket.id] = socket;
-  socket.emit('chat.list', chats);
-  socket.on('chat.add', function(data) {
+  socket.on('connected', function() {
+    client.collection('messages', function(err, collection) {
+      if (err) {
+        throw err;
+      }
+      collection.find().toArray(function(err, results) {
+        if (err) {
+          throw err;
+        }
+        messages = results;
+      });
+    });
+  });
+  socket.emit('message.list', messages);
+  socket.on('message.add', function(data) {
     data.time = Date.now();
-    chats.push(data);
-    broadcast('chat.add', data);
+    client.collection('messages', function(err, collection) {
+      if (err) {
+        throw err;
+      }
+      var message = {name:data.name, message:data.message, time:data.time};
+      collection.save(message, function(err) {
+        if (err) {
+          throw err;
+        }
+      });
+    });
+    broadcast('message.add', data);
   });
   socket.on('disconnect', function() {
     delete sockets[socket.id];
   });
-});
-
-app.get('/socket', function(req, res) {
-  res.render('socket', {title:'Chat'});
 });
