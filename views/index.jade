@@ -14,7 +14,7 @@ block content
         + date.getSeconds()
       ));
     }
-    var socket = io.connect('http://localhost:3000/chat');
+    var socket = io.connect(document.location.href + 'chat');
     socket.on('connect', function() {
       socket.emit('connected');
     });
