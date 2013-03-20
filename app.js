@@ -34,7 +34,7 @@ app.get('/', function(req, res) {
 // db
 var mongo = require('mongodb');
 var client = new mongo.Db(
-    'chat',
+    process.env.MONGO_NAME || 'chat',
     new mongo.Server(
       process.env.MONGO_HOST || 'localhost',
       process.env.MONGO_PORT || 27017
