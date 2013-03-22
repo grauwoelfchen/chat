@@ -84,7 +84,10 @@ io
       if (err) {
         throw err;
       }
-      collection.find().toArray(function(err, results) {
+      var opts = {
+        'sort':['time','desc']
+      }
+      collection.find({}, opts).toArray(function(err, results) {
         if (err) {
           throw err;
         }

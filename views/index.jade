@@ -6,8 +6,7 @@ block content
     // add
     function addlog(data) {
       var date = new Date(data.time);
-      console.log(date);
-      $('#log').prepend($('<li/>').text(
+      $('#log').append($('<li/>').text(
         data.name + ' : ' + data.message + ' '
         + date.getHours() + ':'
         + date.getMinutes() + ':'
