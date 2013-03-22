@@ -94,8 +94,8 @@ io
         messages = results;
       });
     });
+    socket.emit('message.list', messages);
   });
-  socket.emit('message.list', messages);
   socket.on('message.add', function(data) {
     data.time = Date.now();
     client.collection('messages', function(err, collection) {
