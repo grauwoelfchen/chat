@@ -18,6 +18,8 @@ app.configure(function() {
   app.use(express.logger('dev'));
   app.use(express.bodyParser());
   app.use(express.methodOverride());
+  app.use(express.cookieParser(process.env.COOKIE_SECRET || ':)'));
+  app.use(express.session());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
 });
@@ -27,9 +29,10 @@ app.configure('development', function() {
 });
 
 // routes
-app.get('/',       routes.index);
+app.get('/', routes.index);
 app.get('/login',  routes.auth.login);
 app.get('/logout', routes.auth.logout);
+app.get('/auth/twitter/callback', routes.auth.callback);
 
 // db
 var mongo = require('mongodb');

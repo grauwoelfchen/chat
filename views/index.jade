@@ -38,7 +38,7 @@ block content
     h2 Send Message
     form(onsubmit='return send()')
       span Name:
-      input#name(type='text', name='name')
+      input#name(type='text', name='name', value='#{user}')
       span Message:
       input#message(type='text', name='message')
       input(type='submit', value='Send')
