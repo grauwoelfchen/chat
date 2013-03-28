@@ -5,7 +5,6 @@
 
 var express = require('express')
   , routes = require('./routes')
-  , user = require('./routes/user')
   , http = require('http')
   , path = require('path');
 
@@ -27,9 +26,10 @@ app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
-app.get('/', function(req, res) {
-  res.render('index', {title:'Chat'});
-});
+// routes
+app.get('/',       routes.index);
+app.get('/login',  routes.auth.login);
+app.get('/logout', routes.auth.logout);
 
 // db
 var mongo = require('mongodb');
