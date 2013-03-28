@@ -33,7 +33,7 @@ app.get('/', function(req, res) {
 
 // db
 var mongo = require('mongodb');
-var client = new mongo.Db(
+var db = new mongo.Db(
     process.env.MONGO_NAME || 'chat',
     new mongo.Server(
       process.env.MONGO_HOST || 'localhost',
@@ -41,9 +41,9 @@ var client = new mongo.Db(
     ),
     {safe:true}
   );
-client.open(function(err, client) {
+db.open(function(err, db) {
   if (process.env.NODE_ENV == 'production') {
-    client.authenticate(
+    db.authenticate(
       process.env.MONGO_USER,
       process.env.MONGO_PASS,
       function(err, res) {
@@ -59,6 +59,7 @@ client.open(function(err, client) {
     console.log('connected to mongodb');
   }
 });
+app.set('db', db);
 
 // socket.io
 var server = http.createServer(app);
@@ -66,39 +67,36 @@ var io = require('socket.io').listen(server);
 server.listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));
 });
-
 var sockets = {};
 function broadcast(method, message) {
   for(var n in sockets) {
     sockets[n].emit(method, message);
   }
 };
-
-var messages = [];
 io
 .of('/chat')
 .on('connection', function(socket) {
   sockets[socket.id] = socket;
   socket.on('connected', function() {
-    client.collection('messages', function(err, collection) {
+    db.collection('messages', function(err, collection) {
       if (err) {
         throw err;
       }
       var opts = {
-        'sort':['time','desc']
+        'limit': 5,
+        'sort': ['time','desc']
       }
       collection.find({}, opts).toArray(function(err, results) {
         if (err) {
           throw err;
         }
-        messages = results;
+        socket.emit('message.list', results);
       });
     });
-    socket.emit('message.list', messages);
   });
   socket.on('message.add', function(data) {
-    data.time = Date.now();
-    client.collection('messages', function(err, collection) {
+    datt.time = Date.now();
+    db.collection('messages', function(err, collection) {
       if (err) {
         throw err;
       }
