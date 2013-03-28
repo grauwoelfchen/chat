@@ -82,20 +82,16 @@ io
       if (err) {
         throw err;
       }
-      var opts = {
-        'limit': 5,
-        'sort': ['time','desc']
-      }
-      collection.find({}, opts).toArray(function(err, results) {
+      collection.find().sort({time: -1}).limit(5).toArray(function(err, results) {
         if (err) {
           throw err;
         }
-        socket.emit('message.list', results);
+        socket.emit('message.list', results.reverse());
       });
     });
   });
   socket.on('message.add', function(data) {
-    datt.time = Date.now();
+    data.time = Date.now();
     db.collection('messages', function(err, collection) {
       if (err) {
         throw err;
